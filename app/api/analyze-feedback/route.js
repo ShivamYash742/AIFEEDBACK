@@ -48,7 +48,7 @@ export async function POST(req) {
       rating: sentimentResult.rating,
       customerResponse: fallbackResponse,
       keyInsights: [],
-      keywords: [],
+      keywords: sentimentResult.keywords || [],
       offline: true,
     };
 
@@ -182,7 +182,9 @@ export async function POST(req) {
       customerResponse: customerResponse,
       offline: !apiCallSuccessful,
       keyInsights: result.keyInsights || [],
-      keywords: result.keywords || [],
+      keywords: apiCallSuccessful
+        ? result.keywords
+        : sentimentResult.keywords || [],
     };
 
     // Save the response to MongoDB

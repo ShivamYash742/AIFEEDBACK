@@ -5,7 +5,7 @@ const path = require("path");
  * Analyzes sentiment using the Python model
  * @param {string} review - The text to analyze
  * @param {number|null} rating - Optional rating for enhanced analysis
- * 
+ *
  * @returns {Promise<Object>} - Sentiment analysis result
  */
 async function analyzeSentimentWithModel(review, rating = null) {
@@ -43,15 +43,14 @@ async function analyzeSentimentWithModel(review, rating = null) {
           let sentiment = "Neutral";
           let confidence = 50;
           let rating = 0;
+          let keywords = [];
 
           for (const line of lines) {
             if (line.includes("Sentiment:")) {
               sentiment = line.split("Sentiment:")[1].trim();
             }
             if (line.includes("Rating:")) {
-              const ratingMatch = line.match(
-                /Rating: (\d)/
-              );
+              const ratingMatch = line.match(/Rating: (\d)/);
               rating = parseFloat(ratingMatch[1]);
             }
             if (line.includes("Confidence level:")) {
@@ -62,12 +61,17 @@ async function analyzeSentimentWithModel(review, rating = null) {
                 confidence = parseFloat(confidenceMatch[1]);
               }
             }
+            if (line.includes("Key insights:")) {
+              const keywordsText = line.split("Key insights:")[1].trim();
+              keywords = keywordsText.split(", ").filter(Boolean);
+            }
           }
 
           resolve({
             sentiment: sentiment,
             confidence: confidence,
             rating: rating,
+            keywords: keywords,
           });
         } catch (e) {
           console.error("Failed to parse Python output:", e);
