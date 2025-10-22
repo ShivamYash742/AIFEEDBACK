@@ -30,29 +30,6 @@ export default function Dashboard() {
     }
   }, [session, loading, router]);
 
-  useEffect(() => {
-    if (session) {
-      fetchAllData();
-    }
-  }, [session, fetchAllData]);
-
-  const fetchAllData = useCallback(async () => {
-    setDataLoading(true);
-    await Promise.all([
-      fetchSentimentData(),
-      fetchTrendData(),
-      fetchTopicData(),
-      fetchRecentFeedback()
-    ]);
-    setDataLoading(false);
-  }, [fetchSentimentData, fetchTrendData, fetchTopicData, fetchRecentFeedback]);
-
-  const refreshData = async () => {
-    setRefreshing(true);
-    await fetchAllData();
-    setRefreshing(false);
-  };
-
   const fetchSentimentData = useCallback(async () => {
     try {
       const response = await fetch(`/api/sentiment-stats?timeRange=${timeRange}`);
@@ -138,6 +115,29 @@ export default function Dashboard() {
       setRecentFeedback([]);
     }
   }, []);
+
+  const fetchAllData = useCallback(async () => {
+    setDataLoading(true);
+    await Promise.all([
+      fetchSentimentData(),
+      fetchTrendData(),
+      fetchTopicData(),
+      fetchRecentFeedback()
+    ]);
+    setDataLoading(false);
+  }, [fetchSentimentData, fetchTrendData, fetchTopicData, fetchRecentFeedback]);
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    await fetchAllData();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    if (session) {
+      fetchAllData();
+    }
+  }, [session, fetchAllData]);
 
   const exportData = () => {
     // In a real app, this would generate a CSV or Excel file with the dashboard data
