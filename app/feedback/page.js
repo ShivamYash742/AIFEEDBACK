@@ -47,7 +47,7 @@ export default function Feedback() {
     setLoading(false);
   };
 
-  const useExample = (example) => {
+  const applyExample = (example) => {
     setFeedback(example);
   };
 
@@ -139,7 +139,7 @@ export default function Feedback() {
                 {examples.map((example, index) => (
                   <button
                     key={index}
-                    onClick={() => useExample(example)}
+                    onClick={() => applyExample(example)}
                     className="text-left text-sm p-2 w-full text-black bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200"
                   >
                     {example}
@@ -244,7 +244,7 @@ export default function Feedback() {
               <div className="text-center text-gray-500 dark:text-gray-400">
                 <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">
-                  Enter feedback and click "Analyze Feedback" to see results
+                  Enter feedback and click &quot;Analyze Feedback&quot; to see results
                   here
                 </p>
               </div>

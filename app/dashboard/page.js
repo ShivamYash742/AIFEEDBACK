@@ -2,7 +2,7 @@
 
 import { useSessionContext } from "@/app/components/SessionWrapper";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, 
   PieChart, Pie, Cell, Legend, CartesianGrid, AreaChart, Area
@@ -34,9 +34,9 @@ export default function Dashboard() {
     if (session) {
       fetchAllData();
     }
-  }, [session, timeRange]);
+  }, [session, fetchAllData]);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setDataLoading(true);
     await Promise.all([
       fetchSentimentData(),
@@ -45,7 +45,7 @@ export default function Dashboard() {
       fetchRecentFeedback()
     ]);
     setDataLoading(false);
-  };
+  }, [fetchSentimentData, fetchTrendData, fetchTopicData, fetchRecentFeedback]);
 
   const refreshData = async () => {
     setRefreshing(true);
@@ -53,7 +53,7 @@ export default function Dashboard() {
     setRefreshing(false);
   };
 
-  const fetchSentimentData = async () => {
+  const fetchSentimentData = useCallback(async () => {
     try {
       const response = await fetch(`/api/sentiment-stats?timeRange=${timeRange}`);
       if (!response.ok) {
@@ -81,9 +81,9 @@ export default function Dashboard() {
         { name: "Negative", count: 0, percentage: 0 }
       ]);
     }
-  };
+  }, [timeRange]);
 
-  const fetchTrendData = async () => {
+  const fetchTrendData = useCallback(async () => {
     try {
       const response = await fetch(`/api/trends?timeRange=${timeRange}`);
       if (!response.ok) {
@@ -99,9 +99,9 @@ export default function Dashboard() {
       console.error("Error fetching trend data:", error);
       setTrendData([]);
     }
-  };
+  }, [timeRange]);
 
-  const fetchTopicData = async () => {
+  const fetchTopicData = useCallback(async () => {
     try {
       const response = await fetch(`/api/topics?timeRange=${timeRange}`);
       if (!response.ok) {
@@ -119,9 +119,9 @@ export default function Dashboard() {
       console.error("Error fetching topic data:", error);
       setTopicData([]);
     }
-  };
+  }, [timeRange]);
 
-  const fetchRecentFeedback = async () => {
+  const fetchRecentFeedback = useCallback(async () => {
     try {
       const response = await fetch("/api/recent-feedback");
       if (!response.ok) {
@@ -137,7 +137,7 @@ export default function Dashboard() {
       console.error("Error fetching recent feedback:", error);
       setRecentFeedback([]);
     }
-  };
+  }, []);
 
   const exportData = () => {
     // In a real app, this would generate a CSV or Excel file with the dashboard data

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BarChart2, MessageSquare, TrendingUp, Zap, Shield, Users, ArrowRight } from "lucide-react";
 
 export default function Home() {
@@ -41,7 +42,7 @@ export default function Home() {
                     </div>
                     <div className="space-y-4">
                       <div className="p-3 bg-gray-700 rounded-lg">
-                        <p className="text-sm text-gray-300">"I love how easy it is to use this product. The interface is intuitive and the customer service is excellent!"</p>
+                        <p className="text-sm text-gray-300">&quot;I love how easy it is to use this product. The interface is intuitive and the customer service is excellent!&quot;</p>
                         <div className="mt-2 flex items-center">
                           <div className="h-2 w-full bg-gray-600 rounded-full overflow-hidden">
                             <div className="h-full bg-green-500 rounded-full" style={{ width: "92%" }}></div>
@@ -51,7 +52,7 @@ export default function Home() {
                         <p className="mt-1 text-xs text-right text-gray-400">Positive Sentiment</p>
                       </div>
                       <div className="p-3 bg-gray-700 rounded-lg">
-                        <p className="text-sm text-gray-300">"The product is okay but the loading times could be improved. Sometimes it takes too long to process my requests."</p>
+                        <p className="text-sm text-gray-300">&quot;The product is okay but the loading times could be improved. Sometimes it takes too long to process my requests.&quot;</p>
                         <div className="mt-2 flex items-center">
                           <div className="h-2 w-full bg-gray-600 rounded-full overflow-hidden">
                             <div className="h-full bg-gray-500 rounded-full" style={{ width: "45%" }}></div>
@@ -145,7 +146,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white">What Our Users Say</h2>
             <p className="mt-4 text-lg text-gray-300 max-w-3xl mx-auto">
-              Don't just take our word for it. Here's what our customers have to say about our platform.
+              Don&apos;t just take our word for it. Here&apos;s what our customers have to say about our platform.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
@@ -216,7 +217,7 @@ const Testimonial = ({ name, role, company, image, feedback }) => (
     <div className="flex items-center mb-4">
       <div className="w-12 h-12 rounded-full bg-gray-700 overflow-hidden mr-4">
         {image ? (
-          <img src={image} alt={name} className="w-full h-full object-cover" />
+          <Image src={image} alt={name} className="w-full h-full object-cover" width={48} height={48} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white font-bold text-xl">
             {name.charAt(0)}
@@ -228,7 +229,7 @@ const Testimonial = ({ name, role, company, image, feedback }) => (
         <p className="text-sm text-gray-400">{role}, {company}</p>
       </div>
     </div>
-    <p className="italic text-gray-300">"{feedback}"</p>
+    <p className="italic text-gray-300">&quot;{feedback}&quot;</p>
   </div>
 );
 
