@@ -1,6 +1,7 @@
 import connectDB from "@/app/utils/db";
 import ResponseModel from "@/app/models/Response";
 import { analyzeSentimentWithModel } from "@/app/utils/sentimentAnalyzer";
+import Groq from "groq-sdk";
 
 // Fallback responses based on sentiment when offline/API unavailable
 const FALLBACK_RESPONSES = {
@@ -14,7 +15,7 @@ const FALLBACK_RESPONSES = {
 
 export async function POST(req) {
   try {
-    const { feedback, price, rating } = await req.json();
+    const { feedback, price, rating, projectName, category } = await req.json();
 
     if (!feedback || feedback.length < 3) {
       return Response.json(
@@ -37,7 +38,7 @@ export async function POST(req) {
       "Thank you for your feedback. We value your input and will use it to improve our products and services.";
 
     // Get the API key from environment variables
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     let customerResponse = fallbackResponse;
     let apiCallSuccessful = false;
 
@@ -52,76 +53,71 @@ export async function POST(req) {
       offline: true,
     };
 
-    // Check if API key is valid and try to call Gemini API
-    if (apiKey && apiKey !== "YOUR_ACTUAL_GEMINI_API_KEY_HERE") {
+    // Check if API key is valid and try to call Groq API
+    if (apiKey && apiKey !== "YOUR_ACTUAL_GROQ_API_KEY_HERE") {
       try {
-        // Step 2: Use Gemini API for generating customer response and extracting insights
+        const groq = new Groq({ apiKey });
+
+        // Step 2: Use Groq Llama 3 API for generating customer response and extracting insights
         const prompt = `
           Analyze the following customer feedback which has been analyzed as ${sentimentResult.sentiment}:
           
           Customer feedback: "${feedback}"
+          ${projectName ? `\n          Project Name: "${projectName}"` : ""}
+          ${category ? `\n          Category: "${category}"` : ""}
           
           Provide the following:
           
-          1. RESPONSE: A professional, empathetic and personalized response to the customer that acknowledges their feedback and matches the sentiment of their experience. Keep it under 3 sentences, natural and sincere.
+          1. RATING: Rate the feedback on a scale of 1 to 5, where 1 is highly negative and 5 is highly positive. Provide ONLY the number.
           
-          2. KEY_INSIGHTS: Identify 2-4 key insights from this feedback that would be valuable for the business. Each insight should be a short, actionable takeaway.
+          2. RESPONSE: A professional, empathetic and personalized response to the customer that acknowledges their feedback and matches the sentiment of their experience. Keep it under 3 sentences, natural and sincere.
           
-          3. KEYWORDS: Extract 3-6 most important keywords or phrases from the feedback that represent the main topics.
+          3. KEY_INSIGHTS: Identify 2-4 key insights from this feedback that would be valuable for the business. Each insight should be a short, actionable takeaway.
+          
+          4. KEYWORDS: Extract 3-6 most important keywords or phrases from the feedback that represent the main topics.
           
           Format your response exactly as:
+          RATING: [number 1-5]
           RESPONSE: [your customer response]
           KEY_INSIGHTS: [insight 1]; [insight 2]; [etc]
           KEYWORDS: [keyword1], [keyword2], [etc]
         `;
 
-        console.log("Attempting to call Gemini API...");
+        console.log("Attempting to call Groq API...");
 
-        // Call the Gemini API with a timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: "user",
+              content: prompt,
             },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text: prompt }],
-                },
-              ],
-            }),
-            signal: controller.signal,
+          ],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.5,
+          max_completion_tokens: 1024,
+        });
+
+        if (chatCompletion.choices && chatCompletion.choices.length > 0) {
+          const aiResponse = chatCompletion.choices[0].message.content.trim();
+          apiCallSuccessful = true;
+          console.log("Groq API response:", aiResponse);
+
+          // Parse the structured response
+          const ratingPart = aiResponse.match(/RATING:\s*(\d+)/i);
+          const responsePart = aiResponse.match(
+            /RESPONSE:(.*?)(?=KEY_INSIGHTS:|$)/s
+          );
+          const insightsPart = aiResponse.match(
+            /KEY_INSIGHTS:(.*?)(?=KEYWORDS:|$)/s
+          );
+          const keywordsPart = aiResponse.match(/KEYWORDS:(.*?)(?=$)/s);
+
+          // Calculate combined rating
+          let groqRating = ratingPart ? parseInt(ratingPart[1], 10) : sentimentResult.rating;
+          if (isNaN(groqRating) || groqRating < 1 || groqRating > 5) {
+            groqRating = sentimentResult.rating;
           }
-        );
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-
-          if (
-            data.candidates &&
-            data.candidates[0] &&
-            data.candidates[0].content
-          ) {
-            const geminiResponse =
-              data.candidates[0].content.parts[0].text.trim();
-            apiCallSuccessful = true;
-            console.log("Gemini API response:", geminiResponse);
-
-            // Parse the structured response
-            const responsePart = geminiResponse.match(
-              /RESPONSE:(.*?)(?=KEY_INSIGHTS:|$)/s
-            );
-            const insightsPart = geminiResponse.match(
-              /KEY_INSIGHTS:(.*?)(?=KEYWORDS:|$)/s
-            );
-            const keywordsPart = geminiResponse.match(/KEYWORDS:(.*?)(?=$)/s);
+          const combinedRating = Math.round((sentimentResult.rating + groqRating) / 2);
 
             customerResponse = responsePart
               ? responsePart[1].trim()
@@ -146,14 +142,16 @@ export async function POST(req) {
             result = {
               sentiment: sentimentResult.sentiment,
               confidence: sentimentResult.confidence,
-              rating: sentimentResult.rating,
+              rating: combinedRating,
+              localRating: sentimentResult.rating,
+              groqRating: groqRating,
               customerResponse: customerResponse,
               keyInsights: keyInsights,
               keywords: keywords,
               offline: false,
             };
           } else {
-            console.error("Unexpected Gemini API response format");
+            console.error("Unexpected Groq API response format");
             result = {
               sentiment: sentimentResult.sentiment,
               confidence: sentimentResult.confidence,
@@ -162,12 +160,8 @@ export async function POST(req) {
               offline: true,
             };
           }
-        } else {
-          const errorData = await response.json();
-          console.error("Gemini API error:", errorData);
-        }
       } catch (apiError) {
-        console.error("Failed to call Gemini API:", apiError.message);
+        console.error("Failed to call Groq API:", apiError.message);
         // Continue with fallback response
       }
     } else {
@@ -178,7 +172,9 @@ export async function POST(req) {
     result = {
       sentiment: sentimentResult.sentiment,
       confidence: sentimentResult.confidence,
-      rating: sentimentResult.rating,
+      rating: result.rating || sentimentResult.rating,
+      localRating: result.localRating || sentimentResult.rating,
+      groqRating: result.groqRating || sentimentResult.rating,
       customerResponse: customerResponse,
       offline: !apiCallSuccessful,
       keyInsights: result.keyInsights || [],
@@ -196,7 +192,9 @@ export async function POST(req) {
         price: price || null,
         sentiment: result.sentiment,
         confidence: result.confidence,
-        rating: sentimentResult.rating,
+        rating: result.rating,
+        projectName: projectName || null,
+        category: category || null,
         topics: result.keywords || [],
         recommendations: result.keyInsights || [],
         customerResponse: result.customerResponse,

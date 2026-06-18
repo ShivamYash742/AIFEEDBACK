@@ -8,6 +8,9 @@ const ResponseSchema = new mongoose.Schema({
   topics: { type: [String], required: true },
   recommendations: { type: [String], required: true },
   customerResponse: { type: String, required: true },
+  projectName: { type: String, required: false },
+  category: { type: String, required: false },
+  rating: { type: Number, required: false },
   createdAt: { type: Date, default: Date.now },
 });
 

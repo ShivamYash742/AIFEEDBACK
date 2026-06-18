@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ML and Python
+__pycache__/
+*.pyc
+*.csv
+confusion_matrix_*.png
+
+# Duplicate local models
+/app/utils/*.pkl

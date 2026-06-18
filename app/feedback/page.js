@@ -12,6 +12,8 @@ import {
 import { useNotification } from "@/app/components/NotificationSystem";
 
 export default function Feedback() {
+  const [projectName, setProjectName] = useState("");
+  const [category, setCategory] = useState("");
   const [feedback, setFeedback] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function Feedback() {
       const response = await fetch("/api/analyze-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback }),
+        body: JSON.stringify({ feedback, projectName, category }),
       });
 
       if (!response.ok) {
@@ -102,15 +104,51 @@ export default function Feedback() {
               Submit Feedback
             </h2>
 
-            <form onSubmit={handleSubmit}>
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 p-4 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Enter customer feedback here..."
-                rows={6}
-                required
-              ></textarea>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Project Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="e.g. MockMentor v2"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category (Optional)
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select a category</option>
+                  <option value="Customer Service">Customer Service</option>
+                  <option value="Product Quality">Product Quality</option>
+                  <option value="User Interface">User Interface</option>
+                  <option value="Pricing">Pricing</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Customer Feedback
+                </label>
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 p-4 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Enter customer feedback here..."
+                  rows={6}
+                  required
+                ></textarea>
+              </div>
 
               <button
                 type="submit"
