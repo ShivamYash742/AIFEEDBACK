@@ -8,7 +8,7 @@ A full-stack Next.js 15 application that analyzes customer feedback using a trai
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | Next.js 15 (App Router), React 19, Tailwind CSS v4, Recharts |
+| **Frontend** | Next.js 15 (App Router), React 19, Tailwind CSS v3, Recharts |
 | **Backend** | Next.js API Routes, NextAuth.js v4 |
 | **Database** | MongoDB (Mongoose) |
 | **ML Model** | Python (scikit-learn): TF-IDF + Logistic Regression/Naive Bayes/SVM with SMOTE |
